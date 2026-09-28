@@ -1,0 +1,36 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual Environments & Dependencies
+venv/
+.venv/
+env/
+node_modules/
+.next/
+
+# Environment files & Secrets
+.env
+.env.*
+!.env.*.example
+
+# Local SQLite databases
+*.db
+*.db-journal
+*.sqlite3
+
+# Test suite
+tests/
+
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Local logs & temp files
+*.log
+scratch/
+cloudflared.exe

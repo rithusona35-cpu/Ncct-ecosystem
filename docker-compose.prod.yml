@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # ==============================================================================
+  # NCCT Production FastAPI Backend
+  # ==============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ncct_backend_prod
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    env_file:
+      - .env.production
+    environment:
+      # Database connection: Points to managed PostgreSQL (Render/Railway/Supabase)
+      # or falls back to local SQLite volume if DATABASE_URL is not set
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - ENVIRONMENT=production
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-3}
+      - TIMEOUT=${TIMEOUT:-120}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ncct_backend_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - ncct_prod_network
+
+  # ==============================================================================
+  # NCCT Production Next.js Frontend
+  # ==============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Client-side API URL embedded during Next.js build
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: ncct_frontend_prod
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - ncct_prod_network
+
+  # ==============================================================================
+  # Optional Local PostgreSQL Service (Profile: 'with-local-db')
+  # Only used if you choose NOT to use managed Render/Railway/Supabase Postgres.
+  # Run: docker compose -f docker-compose.prod.yml --profile with-local-db up -d
+  # ==============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: ncct_postgres_prod
+    profiles:
+      - with-local-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ncct_prod}
+      POSTGRES_USER: ${POSTGRES_USER:-ncct_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeSecurely2026!}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ncct_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ncct_admin -d ncct_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ncct_prod_network
+
+volumes:
+  ncct_backend_uploads:
+  ncct_postgres_data:
+
+networks:
+  ncct_prod_network:
+    driver: bridge
