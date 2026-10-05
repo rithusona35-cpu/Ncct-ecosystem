@@ -134,17 +134,19 @@ def get_skill_passport(
         # If trainee has taken assessments, consider at least 1 course actively mastered
         completed_courses_count = max(1 if assessed_count >= 2 else 0, completed_progress_count // 3)
 
-        # 4. Count completed practical assessments / projects
+        # 4. Count completed practical assessments / projects (reading only is_current attempts)
         practical_results_count = db.query(AssessmentResult).join(
             Assessment, AssessmentResult.assessment_id == Assessment.id
         ).filter(
             AssessmentResult.trainee_id == user.id,
+            AssessmentResult.is_current == True,
             Assessment.type.in_(["practical", "project"])
         ).count()
 
         # Fallback to total assessments completed if types are standard quiz/practical
         total_assessments_count = db.query(AssessmentResult).filter(
-            AssessmentResult.trainee_id == user.id
+            AssessmentResult.trainee_id == user.id,
+            AssessmentResult.is_current == True
         ).count()
         completed_projects_count = max(practical_results_count, min(total_assessments_count, 2))
 

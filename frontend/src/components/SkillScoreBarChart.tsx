@@ -16,7 +16,29 @@ export default function SkillScoreBarChart({
   title = 'Skill-Wise Competency Breakdown',
   subtitle = 'Assessment results aggregated per skill dimension for targeted capability building',
 }: SkillScoreBarChartProps) {
-  const skillsList = Array.isArray(skillScores) ? skillScores : Object.values(skillScores || {});
+  const rawList = Array.isArray(skillScores) ? skillScores : Object.values(skillScores || {});
+  const seenSkills = new Set<string>();
+  const skillsList: SkillScoreItem[] = [];
+  for (const item of rawList) {
+    if (!item) continue;
+    const key = (typeof item === 'object' && item.skill_id !== undefined) 
+      ? String(item.skill_id) 
+      : (typeof item === 'object' && item.skill_name ? item.skill_name : String(item));
+    if (!seenSkills.has(key)) {
+      seenSkills.add(key);
+      if (typeof item === 'object') {
+        skillsList.push(item);
+      } else {
+        skillsList.push({
+          skill_id: 0,
+          skill_name: key,
+          marks_obtained: 0,
+          total_marks: 10,
+          percentage: Number(item) || 0,
+        });
+      }
+    }
+  }
 
   if (skillsList.length === 0) {
     return (
@@ -27,13 +49,13 @@ export default function SkillScoreBarChart({
   }
 
   // Calculate high-level stats
-  const totalEarned = skillsList.reduce((acc, s) => acc + s.marks_obtained, 0);
-  const totalPossible = skillsList.reduce((acc, s) => acc + s.total_marks, 0);
+  const totalEarned = skillsList.reduce((acc, s) => acc + (s.marks_obtained || 0), 0);
+  const totalPossible = skillsList.reduce((acc, s) => acc + (s.total_marks || 0), 0);
   const computedAvg = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
   const displayOverall = overallScore !== undefined ? Math.round(overallScore) : computedAvg;
 
-  const proficientCount = skillsList.filter(s => s.percentage >= 75).length;
-  const needsImprovementCount = skillsList.filter(s => s.percentage < 50).length;
+  const proficientCount = skillsList.filter(s => (s.percentage || 0) >= 75).length;
+  const needsImprovementCount = skillsList.filter(s => (s.percentage || 0) < 50).length;
 
   const getBarColor = (pct: number) => {
     if (pct >= 75) return 'from-emerald-500 to-teal-400';

@@ -547,6 +547,10 @@ def seed_all():
             ("Accounting", "Which account is credited when dividend equalization funds are appropriated from net profit?"),
             ("Accounting", "How are bad debt provisions classified under standard cooperative accounting guidelines?"),
             ("Accounting", "What is the primary difference between cooperative surplus distribution and corporate dividends?"),
+            # 3 Cooperative Accounting questions
+            ("Cooperative Accounting", "What accounting standard governs member equity reporting in primary agricultural societies?"),
+            ("Cooperative Accounting", "How are government interest subventions accounted for in the cooperative income statement?"),
+            ("Cooperative Accounting", "Under PACS guidelines, how should common good fund appropriations be treated in the balance sheet?"),
             # 5 ERP questions
             ("ERP", "In a cooperative enterprise ERP, which sub-ledger handles crop loan disbursements?"),
             ("ERP", "How does role-based access control prevent unauthorized ledger adjustments in an ERP?"),

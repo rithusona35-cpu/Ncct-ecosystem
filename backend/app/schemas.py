@@ -380,8 +380,12 @@ class AssessmentResponse(BaseModel):
     total_marks: int = 0
     model_config = ConfigDict(from_attributes=True)
 
+class AssessmentAnswerItem(BaseModel):
+    question_id: int
+    selected_option: Union[int, str]
+
 class AssessmentSubmitRequest(BaseModel):
-    answers: Dict[str, int] = Field(..., description="Dict of question_id -> selected_option_index")
+    answers: Union[List[AssessmentAnswerItem], Dict[str, Union[int, str]]]
 
 class SkillScoreItem(BaseModel):
     skill_id: int
@@ -389,14 +393,17 @@ class SkillScoreItem(BaseModel):
     marks_obtained: int
     total_marks: int
     percentage: float
+    score: Optional[float] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class AssessmentSubmitResponse(BaseModel):
     result_id: int
     assessment_id: int
+    trainee_id: Optional[str] = None
     overall_score: float
     total_marks_earned: int
     total_marks_possible: int
-    skill_wise_score: Dict[str, SkillScoreItem]
+    skill_wise_score: Dict[str, Any]
     submitted_at: datetime
 
 class TraineeSkillScoreSummary(BaseModel):

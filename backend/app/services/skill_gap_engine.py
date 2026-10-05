@@ -164,24 +164,39 @@ def get_trainee_skill_scores(trainee_id: Union[int, str], db: Session) -> Dict[s
     if not user:
         return {}
 
-    # Get results ordered latest first
+    # Get only is_current == True results ordered latest first
     results = db.query(AssessmentResult).filter(
-        AssessmentResult.trainee_id == user.id
+        AssessmentResult.trainee_id == user.id,
+        AssessmentResult.is_current == True
     ).order_by(desc(AssessmentResult.submitted_at)).all()
 
     scores_by_name: Dict[str, Dict[str, Any]] = {}
 
     for res in results:
         scores = res.skill_wise_score or {}
-        for _, s_data in scores.items():
-            s_name = s_data.get("skill_name")
+        for k, s_data in scores.items():
+            if isinstance(s_data, dict):
+                s_name = s_data.get("skill_name") or k
+                pct = float(s_data.get("percentage", s_data.get("score", 0.0)))
+                s_id = s_data.get("skill_id")
+                marks_ob = s_data.get("marks_obtained", 0)
+                tot_m = s_data.get("total_marks", 0)
+            elif isinstance(s_data, (int, float)):
+                s_name = k
+                pct = float(s_data)
+                s_id = None
+                marks_ob = 0
+                tot_m = 0
+            else:
+                continue
+
             if s_name and s_name.lower() not in scores_by_name:
                 scores_by_name[s_name.lower()] = {
-                    "skill_id": s_data.get("skill_id"),
+                    "skill_id": s_id,
                     "skill_name": s_name,
-                    "percentage": float(s_data.get("percentage", 0.0)),
-                    "marks_obtained": s_data.get("marks_obtained", 0),
-                    "total_marks": s_data.get("total_marks", 0),
+                    "percentage": pct,
+                    "marks_obtained": marks_ob,
+                    "total_marks": tot_m,
                 }
 
     return scores_by_name
@@ -226,16 +241,21 @@ def compare_trainee_to_role(
         trainee_scores = get_trainee_skill_scores(trainee_id, db)
         comparisons: List[Dict[str, Any]] = []
 
+        # Deduplicate requirements by skill_id, keeping the higher threshold
+        reqs_by_skill: Dict[int, Any] = {}
         for req in role.requirements:
-            s = req.skill
-            if not s:
-                continue
+            s_id = req.skill_id
+            req_level_str = req.required_level.upper() if req.required_level else "MEDIUM"
+            thresh = REQUIRED_LEVEL_THRESHOLDS.get(req_level_str, 60.0)
+            if s_id not in reqs_by_skill or thresh > reqs_by_skill[s_id][1]:
+                reqs_by_skill[s_id] = (req, thresh)
 
-            req_level_str = req.required_level.upper()
-            threshold = REQUIRED_LEVEL_THRESHOLDS.get(req_level_str, 60.0)
+        for s_id, (req, threshold) in reqs_by_skill.items():
+            s = req.skill
+            s_name = s.name if s else f"Unknown Skill #{s_id}"
 
             # Look up trainee score for this skill
-            trainee_skill_info = trainee_scores.get(s.name.lower())
+            trainee_skill_info = trainee_scores.get(s_name.lower())
             if trainee_skill_info is not None:
                 trainee_level = float(trainee_skill_info["percentage"])
             else:
@@ -245,9 +265,9 @@ def compare_trainee_to_role(
             gap_pct = max(0.0, round(threshold - trainee_level, 1)) if is_gap else 0.0
 
             comparisons.append({
-                "skill_id": s.id,
-                "skill": s.name,
-                "skill_name": s.name,
+                "skill_id": s_id,
+                "skill": s_name,
+                "skill_name": s_name,
                 "trainee_level": trainee_level,
                 "required_level": req.required_level,
                 "required_threshold": threshold,

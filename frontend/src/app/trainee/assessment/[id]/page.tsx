@@ -3,7 +3,8 @@
 import React, { useEffect, useState, use } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { authApi } from '@/lib/api';
-import { AssessmentResponse, AssessmentSubmitResponse } from '@/lib/types';
+import { AssessmentResponse, AssessmentSubmitResponse, AssessmentAnswerItem } from '@/lib/types';
+import { X, Target, FileCheck } from 'lucide-react';
 import SkillScoreBarChart from '@/components/SkillScoreBarChart';
 import {
   Award,
@@ -33,6 +34,7 @@ export default function TraineeAssessmentPage({ params }: PageProps) {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AssessmentSubmitResponse | null>(null);
 
@@ -77,14 +79,15 @@ export default function TraineeAssessmentPage({ params }: PageProps) {
     setError(null);
 
     try {
-      // Map to string keys for JSON submit
-      const payloadAnswers: Record<string, number> = {};
-      Object.entries(answers).forEach(([k, v]) => {
-        payloadAnswers[k] = v;
-      });
+      // Map to aligned payload array: [{ question_id: 1, selected_option: "A" }, ...]
+      const formattedAnswers: AssessmentAnswerItem[] = Object.entries(answers).map(([k, v]) => ({
+        question_id: Number(k),
+        selected_option: ['A', 'B', 'C', 'D'][v] ?? v,
+      }));
 
-      const submissionResult = await authApi.submitAssessment(assessmentId, payloadAnswers);
+      const submissionResult = await authApi.submitAssessment(assessmentId, formattedAnswers);
       setResult(submissionResult);
+      setShowModal(true);
 
       // Scroll smoothly to results card
       setTimeout(() => {
@@ -340,6 +343,87 @@ export default function TraineeAssessmentPage({ params }: PageProps) {
             </>
           )}
         </div>
+
+      {/* RESULT MODAL OVERLAY */}
+      {showModal && result && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn" id="assessment-submit-modal">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                  <Award className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Assessment Evaluation Complete</h3>
+                  <p className="text-xs text-slate-500">
+                    Submitted at {new Date(result.submitted_at).toLocaleTimeString()} • Trainee: {result.trainee_id}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Score Overview */}
+            <div className="bg-gradient-to-br from-indigo-50/60 to-slate-50 rounded-2xl p-5 border border-indigo-100/60 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Overall Score</span>
+                <div className="text-2xl font-black text-slate-900 mt-0.5">
+                  {result.total_marks_earned} / {result.total_marks_possible} pts
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-3xl font-black text-indigo-700">{result.overall_score}%</span>
+                <div className="text-xs font-bold text-emerald-600">
+                  {result.overall_score >= 60 ? 'Competency Verified' : 'Needs Reinforcement'}
+                </div>
+              </div>
+            </div>
+
+            {/* Per-skill Score Breakdown */}
+            <SkillScoreBarChart
+              skillScores={result.skill_wise_score}
+              overallScore={result.overall_score}
+              title="Skill-Wise Competency Breakdown"
+              subtitle="Score percentage per skill dimension recorded for Skill Passport & Skill-Gap engine"
+            />
+
+            {/* Modal Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Link
+                  href="/trainee/skill-passport"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
+                  id="modal-btn-passport"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>View Skill Passport</span>
+                </Link>
+                <Link
+                  href="/trainee/skill-gap"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
+                  id="modal-btn-skill-gap"
+                >
+                  <Target className="w-3.5 h-3.5" />
+                  <span>Check Skill Gap</span>
+                </Link>
+              </div>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition text-center"
+              >
+                Review Full Answers
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </ProtectedRoute>
   );

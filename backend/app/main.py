@@ -32,6 +32,10 @@ if engine.name == "sqlite":
             c.execute("UPDATE certificates SET certificate_id = certificate_code WHERE certificate_id IS NULL")
             c.execute("UPDATE certificates SET course_id = programme_id WHERE course_id IS NULL")
             c.execute("UPDATE certificates SET completion_date = issued_date WHERE completion_date IS NULL")
+            # Ensure is_current column exists on assessment_results table
+            res_cols = [col[1] for col in c.execute("PRAGMA table_info(assessment_results)").fetchall()]
+            if "is_current" not in res_cols:
+                c.execute("ALTER TABLE assessment_results ADD COLUMN is_current BOOLEAN DEFAULT 1")
             raw_conn.commit()
     except Exception:
         pass
@@ -80,6 +84,7 @@ app.include_router(courses.router)
 app.include_router(lms.router)
 app.include_router(attendance.router)
 app.include_router(assessment.router)
+app.include_router(assessment.router_plural)
 app.include_router(assessment.skills_router)
 app.include_router(skill_gap.router)
 app.include_router(skill_passport.router)

@@ -292,6 +292,7 @@ class AssessmentResult(Base):
     total_marks_earned = Column(Integer, default=0, nullable=False)
     total_marks_possible = Column(Integer, default=0, nullable=False)
     answers = Column(JSON, default=dict, nullable=False)  # { question_id: selected_option }
+    is_current = Column(Boolean, default=True, nullable=False)
     submitted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     trainee = relationship("User")

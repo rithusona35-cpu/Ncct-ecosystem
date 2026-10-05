@@ -215,13 +215,13 @@ def seed_demo_accounts():
             status = "ABSENT" if i == 4 else "PRESENT"
             existing_att = db.query(Attendance).filter(
                 Attendance.trainee_id == trainee.id,
-                Attendance.session_id == f"DEMO-SESSION-{i+1}"
+                Attendance.session_id == f"SESSION-2025-0{i+1}"
             ).first()
             if not existing_att:
                 att = Attendance(
                     trainee_id=trainee.id,
                     trainee_profile_id=profile.id,
-                    session_id=f"DEMO-SESSION-{i+1}",
+                    session_id=f"SESSION-2025-0{i+1}",
                     programme_id=prog.id,
                     date=session_date,
                     status=status,
@@ -295,6 +295,7 @@ def seed_demo_accounts():
                     total_marks_earned=338,
                     total_marks_possible=500,
                     answers={f"q_{i}": 0 for i in range(1, 21)},
+                    is_current=True,
                     submitted_at=datetime.utcnow() - timedelta(days=2)
                 )
                 db.add(res)
@@ -303,6 +304,7 @@ def seed_demo_accounts():
                 res.overall_score = 68
                 res.total_marks_earned = 338
                 res.total_marks_possible = 500
+                res.is_current = True
             db.commit()
             print("  + Assessment Result: Acc=88%, ERP=52%, GST=48%, Comm=65%, Excel=85% (Overall 68%)")
 
