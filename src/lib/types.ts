@@ -307,6 +307,8 @@ export interface AssessmentResponse {
   type: string;
   created_at: string;
   questions: AssessmentQuestionPublic[];
+  total_questions?: number;
+  total_marks?: number;
 }
 
 export interface SkillScoreItem {

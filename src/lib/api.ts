@@ -167,44 +167,6 @@ export const authApi = {
     return res.json();
   },
 
-  // Skill Passport & Competency Engine
-  async getSkillPassport(identifier: string | number = 'me'): Promise<SkillPassportResponse> {
-    const res = await fetchWithAuth(`/api/skill-passport/${identifier}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Failed to load skill passport' }));
-      throw new Error(err.detail || 'Failed to load skill passport');
-    }
-    return res.json();
-  },
-
-  async getJobRoles(): Promise<JobRole[]> {
-    const res = await fetchWithAuth('/api/skills/job-roles');
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Failed to load job roles' }));
-      throw new Error(err.detail || 'Failed to load job roles');
-    }
-    return res.json();
-  },
-
-  async getSkillGapAnalysis(traineeId: string | number = 'me', jobRoleId: number): Promise<SkillGapAnalysisResponse> {
-    const res = await fetchWithAuth(`/api/skills/gap-analysis/${traineeId}/${jobRoleId}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Failed to perform skill gap analysis' }));
-      throw new Error(err.detail || 'Failed to perform skill gap analysis');
-    }
-    return res.json();
-  },
-
-  async getSkillRecommendations(traineeId: string | number = 'me', jobRoleId?: number): Promise<TraineeRecommendationsResponse> {
-    const query = jobRoleId ? `?job_role_id=${jobRoleId}` : '';
-    const res = await fetchWithAuth(`/api/skills/recommendations/${traineeId}${query}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Failed to load skill recommendations' }));
-      throw new Error(err.detail || 'Failed to load skill recommendations');
-    }
-    return res.json();
-  },
-
   // Institutions
   async getInstitutions(): Promise<Institution[]> {
     const res = await fetch(`${API_BASE_URL}/api/institutions`);
@@ -477,7 +439,7 @@ export const authApi = {
     return res.json();
   },
 
-  async getSkillGapAnalysis(traineeId: string = 'me', jobRoleId: number): Promise<SkillGapAnalysisResponse> {
+  async getSkillGapAnalysis(traineeId: string | number = 'me', jobRoleId: number): Promise<SkillGapAnalysisResponse> {
     const res = await fetchWithAuth(`/api/skills/gap-analysis/${traineeId}/${jobRoleId}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to calculate skill-gap analysis' }));
@@ -486,7 +448,7 @@ export const authApi = {
     return res.json();
   },
 
-  async getSkillRecommendations(traineeId: string = 'me', jobRoleId?: number): Promise<TraineeRecommendationsResponse> {
+  async getSkillRecommendations(traineeId: string | number = 'me', jobRoleId?: number): Promise<TraineeRecommendationsResponse> {
     const url = jobRoleId
       ? `/api/skills/recommendations/${traineeId}?job_role_id=${jobRoleId}`
       : `/api/skills/recommendations/${traineeId}`;
@@ -499,7 +461,7 @@ export const authApi = {
   },
 
   // --- Dynamic Skill Passport Method ---
-  async getSkillPassport(traineeId: string = 'me'): Promise<SkillPassportResponse> {
+  async getSkillPassport(traineeId: string | number = 'me'): Promise<SkillPassportResponse> {
     const res = await fetchWithAuth(`/api/skill-passport/${traineeId}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to load skill passport' }));
