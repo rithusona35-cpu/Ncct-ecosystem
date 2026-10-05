@@ -1,1 +1,0 @@
-# NCCT Auth Package
