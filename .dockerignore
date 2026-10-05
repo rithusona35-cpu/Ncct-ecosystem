@@ -4,14 +4,13 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
-# Virtual Environments & Dependencies
+# Virtual Environments
 venv/
 .venv/
 env/
-node_modules/
-.next/
+ENV/
 
-# Environment files & Secrets
+# Environment files & Secrets (never bake secrets into Docker images)
 .env
 .env.*
 !.env.*.example
@@ -33,4 +32,3 @@ tests/
 # Local logs & temp files
 *.log
 scratch/
-cloudflared.exe
