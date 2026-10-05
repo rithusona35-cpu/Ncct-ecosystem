@@ -312,7 +312,7 @@ export default function CoursePlayerPage() {
                         Skill Assessment Quiz
                       </span>
                       <span className="text-xs text-slate-500 font-mono">
-                        {activeAssessment.total_questions} Questions • {activeAssessment.total_marks} Marks
+                        {activeAssessment.total_questions ?? activeAssessment.questions?.length ?? 0} Questions • {activeAssessment.total_marks ?? 0} Marks
                       </span>
                     </div>
                     <h2 className="text-xl font-extrabold text-slate-900">{activeAssessment.title}</h2>
@@ -701,7 +701,7 @@ export default function CoursePlayerPage() {
                               <div className="min-w-0">
                                 <span className="font-bold truncate block">{ass.title}</span>
                                 <span className="text-[10px] text-slate-500 font-mono">
-                                  {ass.total_questions} Questions • {ass.total_marks} Marks
+                                  {ass.total_questions ?? ass.questions?.length ?? 0} Questions • {ass.total_marks ?? 0} Marks
                                 </span>
                               </div>
                             </div>

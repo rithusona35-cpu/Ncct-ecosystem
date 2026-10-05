@@ -305,6 +305,9 @@ export interface AssessmentResponse {
   course_title?: string | null;
   title: string;
   type: string;
+  total_questions?: number;
+  total_marks?: number;
+  passing_percentage?: number;
   created_at: string;
   questions: AssessmentQuestionPublic[];
 }
